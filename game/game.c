@@ -111,6 +111,7 @@ struct state {
     asset_t *restart_button;
     asset_t *overworld_image;
     asset_t *boss_background_image;
+    asset_t *interface_image;
 
     bool boss_spawned;
     bool portal_spawned;
@@ -253,10 +254,10 @@ void on_mouse(mouse_event_type_t type, double x_loc, double y_loc, state_t *stat
         case SCENE_BOSS: {
             vector_t mouse_location = {.x = x_loc, .y = MAX.y - y_loc}; // y is shifted
             if (type == MOUSE_LEFT) {
-                render_player_melee_attack(state);
+                render_player_ranged_attack(state, mouse_location);
             } 
             else if (type == MOUSE_RIGHT) {
-                render_player_ranged_attack(state, mouse_location);
+                render_player_melee_attack(state);
             }
             break;
         }
@@ -473,6 +474,11 @@ void render_boss_ring_attack(state_t *state) {
         create_collision(state->scene, player_body, laser_body, 
                          player_projectile_collision_handler, NULL, 1.0);
     }
+    // The state now owns the projectiles; free only the temporary container.
+    while (list_size(projectiles)) {
+        list_remove(projectiles, list_size(projectiles) - 1);
+    }
+    list_free(projectiles);
 }
 
 /**
@@ -501,6 +507,11 @@ void render_boss_ray_attack(state_t *state) {
         create_collision(state->scene, player_body, laser_body, 
                          player_projectile_collision_handler, NULL, 1.0);
     }
+    // The state now owns the projectiles; free only the temporary container.
+    while (list_size(projectiles)) {
+        list_remove(projectiles, list_size(projectiles) - 1);
+    }
+    list_free(projectiles);
 }
 
 /**
@@ -659,10 +670,7 @@ void render_bars(state_t *state) {
  * @param state the current state of the game
 */
 void render_interface_border(state_t *state) {
-    SDL_Rect interface_box = {.x = MIN.x, .y = MIN.y, .w = MAX.x, .h = MAX.y};
-    asset_t *interface_image = asset_make_image(INTERFACE_PATH, interface_box);
-    list_add(state->body_assets, interface_image);
-    asset_render(interface_image);
+    asset_render(state->interface_image);
 }
 
 /**
@@ -847,9 +855,9 @@ state_t *emscripten_init() {
     state->portal_spawned = false;
     state->game_over = false;
     state->boss = NULL;
+    state->portal = NULL;
 
     // Create the buttons for the menu and the end screen.
-    asset_cache_init();
     create_buttons(state);
 
     // Initialize the list of projectiles and enemies
@@ -865,6 +873,8 @@ state_t *emscripten_init() {
 
     // Create the images for all necessary backgrounds and add it to the body assets
     SDL_Rect background_box = {.x = MIN.x, .y = MIN.y, .w = MAX.x, .h = MAX.y};
+
+    state->interface_image = asset_make_image(INTERFACE_PATH, background_box);
 
     asset_t *startscreen_image = asset_make_image(STARTSCREEN_PATH, background_box);
     state->start_screen = startscreen_image;
@@ -1140,6 +1150,7 @@ void emscripten_free(state_t *state) {
     asset_destroy(state->start_screen);
     asset_destroy(state->lose_screen);
     asset_destroy(state->win_screen);
+    asset_destroy(state->interface_image);
     asset_destroy(state->play_button);
     asset_destroy(state->restart_button);
     asset_destroy(state->overworld_image);

@@ -72,6 +72,7 @@ asset_t *asset_make_image_with_body(const char *filepath, SDL_Rect bounding_box,
   image_asset_t *img = (image_asset_t *)asset_init(ASSET_IMAGE, bounding_box);
   img->texture = asset_cache_obj_get_or_create(ASSET_IMAGE, filepath);
   img->body = body; // Set body to the given body
+  img->angle = 0;
 
   return (asset_t *)img;
 }

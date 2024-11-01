@@ -1,0 +1,13 @@
+# Reproducible release build, independent of the college lab's native SDL setup.
+# Tested with Emscripten 6.0.9.
+# Activate Emscripten first: source /path/to/emsdk/emsdk_env.sh
+EMCC ?= emcc
+WEB_OUT ?= bin/web
+SOURCES := game/game.c $(filter-out library/test_util.c,$(wildcard library/*.c))
+PORTS := -sUSE_SDL=2 -sUSE_SDL_GFX=2 -sUSE_SDL_IMAGE=2 -sSDL2_IMAGE_FORMATS='["png"]' -sUSE_SDL_TTF=2 -sUSE_SDL_MIXER=2 -sSDL2_MIXER_FORMATS='["ogg"]'
+FLAGS := -O3 -flto -Iinclude -Wall $(PORTS) -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=67108864 -sASSERTIONS=0 -sEXIT_RUNTIME=1
+
+.PHONY: web
+web:
+	mkdir -p "$(WEB_OUT)"
+	$(EMCC) $(SOURCES) $(FLAGS) --preload-file assets -o "$(WEB_OUT)/game.js"

@@ -123,7 +123,8 @@ char get_keycode(SDL_Keycode key) {
 }
 
 SDL_Rect sdl_get_bounding_box(body_t *body) {
-  list_t *shape = body_get_shape(body);
+  // Borrow vertices for this read-only calculation; do not allocate a copy.
+  list_t *shape = polygon_get_points(body_get_polygon(body));
   double min_x = __DBL_MAX__;
   double max_x = -__DBL_MAX__;
   double min_y = __DBL_MAX__;
@@ -190,9 +191,14 @@ void sdl_init(vector_t min, vector_t max) {
   center = vec_multiply(0.5, vec_add(min, max));
   max_diff = vec_subtract(max, center);
   SDL_Init(SDL_INIT_EVERYTHING);
+  Uint32 window_flags = SDL_WINDOW_RESIZABLE;
+#ifdef __EMSCRIPTEN__
+  // CSS scales the web canvas; keep the game's drawing coordinates fixed.
+  window_flags = 0;
+#endif
   window = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_CENTERED,
                             SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT,
-                            SDL_WINDOW_RESIZABLE);
+                            window_flags);
   renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC);
   TTF_Init();
 

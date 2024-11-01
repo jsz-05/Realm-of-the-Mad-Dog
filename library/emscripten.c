@@ -11,7 +11,7 @@
 
 state_t *state;
 
-void loop() {
+void loop(void *unused) {
   // If needed, generate a pointer to our initial state
   if (!state) {
     state = emscripten_init();
@@ -39,7 +39,7 @@ int main() {
   emscripten_set_main_loop_arg(loop, NULL, 0, 1);
 #else
   while (1) {
-    loop();
+    loop(NULL);
   }
 #endif
 }
